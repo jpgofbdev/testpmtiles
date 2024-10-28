@@ -16,13 +16,14 @@
             position: absolute;
             top: 10px;
             left: 10px;
-            z-index: 1000; /* Pour que le bouton soit au-dessus de la carte */
+            z-index: 1000;
+            width: 300px;
         }
         #loadButton {
             position: absolute;
             top: 10px;
-            left: 300px;
-            z-index: 1000; /* Pour que le bouton soit au-dessus de la carte */
+            left: 320px;
+            z-index: 1000;
         }
     </style>
 </head>
@@ -44,14 +45,15 @@
                     })
                     .then(arrayBuffer => {
                         const p = new pmtiles.PMTiles(arrayBuffer);
-                        p.getHeader().then((h) => {
-                            let layer = pmtiles.leafletRasterLayer(p, {
-                                maxzoom: h.maxZoom,
-                                attribution: 'Données par <a href="http://openstreetmap.org">OpenStreetMap</a>, sous <a href="http://www.openstreetmap.org/copyright">ODbL</a>.',
-                            });
-                            layer.addTo(map);
-                            map.setView([0, 0], 2); // Réinitialiser la vue de la carte après chargement
+                        return p.getHeader(); // Récupérer l'en-tête pour obtenir des informations sur le fichier
+                    })
+                    .then(header => {
+                        let layer = pmtiles.leafletRasterLayer(p, {
+                            maxzoom: header.maxZoom,
+                            attribution: 'Données par <a href="http://openstreetmap.org">OpenStreetMap</a>, sous <a href="http://www.openstreetmap.org/copyright">ODbL</a>.',
                         });
+                        layer.addTo(map);
+                        map.setView([0, 0], 2); // Réinitialiser la vue de la carte après chargement
                     })
                     .catch(error => {
                         console.error('Erreur lors du chargement du fichier PMTiles :', error);
