@@ -17,25 +17,18 @@
             top: 10px;
             left: 10px;
             z-index: 1000; /* Pour que le bouton soit au-dessus de la carte */
-            width: 300px; /* Largeur pour le champ de saisie */
-        }
-        #loadButton, #copyButton {
-            position: absolute;
-            top: 10px;
-            z-index: 1000; /* Pour que le bouton soit au-dessus de la carte */
         }
         #loadButton {
-            left: 320px; /* Position du bouton de chargement */
-        }
-        #copyButton {
-            left: 420px; /* Position du bouton de copie */
+            position: absolute;
+            top: 10px;
+            left: 300px;
+            z-index: 1000; /* Pour que le bouton soit au-dessus de la carte */
         }
     </style>
 </head>
 <body>
     <input type="text" id="urlInput" placeholder="Entrez l'URL du fichier PMTiles" />
     <button id="loadButton">Charger PMTiles</button>
-    <button id="copyButton">Copier l'URL</button>
     <div id="map"></div>
 
     <script type="text/javascript">
@@ -64,14 +57,6 @@
                         console.error('Erreur lors du chargement du fichier PMTiles :', error);
                     });
             }
-        });
-
-        // Fonction pour copier l'URL dans le presse-papiers
-        document.getElementById('copyButton').addEventListener('click', function() {
-            const urlInput = document.getElementById('urlInput');
-            urlInput.select(); // Sélectionne le texte dans le champ de saisie
-            document.execCommand('copy'); // Copie le texte sélectionné
-            alert("URL copiée dans le presse-papiers !");
         });
     </script>
 </body>
