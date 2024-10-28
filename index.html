@@ -12,39 +12,66 @@
             height: 100vh;
             margin: 0;
         }
-        #fileInput {
+        #urlInput {
             position: absolute;
             top: 10px;
             left: 10px;
             z-index: 1000; /* Pour que le bouton soit au-dessus de la carte */
+            width: 300px; /* Largeur pour le champ de saisie */
+        }
+        #loadButton, #copyButton {
+            position: absolute;
+            top: 10px;
+            z-index: 1000; /* Pour que le bouton soit au-dessus de la carte */
+        }
+        #loadButton {
+            left: 320px; /* Position du bouton de chargement */
+        }
+        #copyButton {
+            left: 420px; /* Position du bouton de copie */
         }
     </style>
 </head>
 <body>
-    <input type="file" id="fileInput" accept=".pmtiles" />
+    <input type="text" id="urlInput" placeholder="Entrez l'URL du fichier PMTiles" />
+    <button id="loadButton">Charger PMTiles</button>
+    <button id="copyButton">Copier l'URL</button>
     <div id="map"></div>
 
     <script type="text/javascript">
         const map = L.map("map").setView([0, 0], 2); // Position par défaut de la carte
 
-        document.getElementById('fileInput').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const arrayBuffer = e.target.result;
-                    const p = new pmtiles.PMTiles(arrayBuffer);
-                    p.getHeader().then((h) => {
-                        let layer = pmtiles.leafletRasterLayer(p, {
-                            maxzoom: h.maxZoom,
-                            attribution: 'Données par <a href="http://openstreetmap.org">OpenStreetMap</a>, sous <a href="http://www.openstreetmap.org/copyright">ODbL</a>.',
+        document.getElementById('loadButton').addEventListener('click', function() {
+            const url = document.getElementById('urlInput').value;
+            if (url) {
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Erreur réseau');
+                        return response.arrayBuffer(); // Lire le fichier en tant que tableau de bytes
+                    })
+                    .then(arrayBuffer => {
+                        const p = new pmtiles.PMTiles(arrayBuffer);
+                        p.getHeader().then((h) => {
+                            let layer = pmtiles.leafletRasterLayer(p, {
+                                maxzoom: h.maxZoom,
+                                attribution: 'Données par <a href="http://openstreetmap.org">OpenStreetMap</a>, sous <a href="http://www.openstreetmap.org/copyright">ODbL</a>.',
+                            });
+                            layer.addTo(map);
+                            map.setView([0, 0], 2); // Réinitialiser la vue de la carte après chargement
                         });
-                        layer.addTo(map);
-                        map.setView([0, 0], 2); // Réinitialiser la vue de la carte après chargement
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors du chargement du fichier PMTiles :', error);
                     });
-                };
-                reader.readAsArrayBuffer(file); // Lire le fichier sélectionné en tant que tableau de bytes
             }
+        });
+
+        // Fonction pour copier l'URL dans le presse-papiers
+        document.getElementById('copyButton').addEventListener('click', function() {
+            const urlInput = document.getElementById('urlInput');
+            urlInput.select(); // Sélectionne le texte dans le champ de saisie
+            document.execCommand('copy'); // Copie le texte sélectionné
+            alert("URL copiée dans le presse-papiers !");
         });
     </script>
 </body>
