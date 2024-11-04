@@ -1,116 +1,110 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Charger PMTiles dans Leaflet</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.0/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.0/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
-    <style>
-        body, #map {
-            height: 100vh;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-        }
-        #map {
-            flex: 1; /* Occupy remaining height */
-        }
-        #controls {
-            padding: 10px;
-            background: white;
-            position: absolute;
-            z-index: 1000; /* Ensure controls are above the map */
-            width: 100%;
-        }
-        #load-button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA Map with PMTiles</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; }
+    #controls { position: absolute; top: 10px; left: 10px; z-index: 1000; background: white; padding: 10px; border-radius: 5px; }
+    #progress { width: 100%; }
+  </style>
 </head>
 <body>
-    <div id="controls">
-        <button id="load-button">Charger PMTiles</button>
-    </div>
-    <div id="map"></div>
 
-    <script>
-        // Initialisation de la carte Leaflet
-        const map = L.map("map").setView([47.5, 1.5], 10); // Coordonnées centrées sur la Sologne
-        let currentLayer;
+<div id="controls">
+  <button id="download">Télécharger PMTiles</button>
+  <progress id="progress" value="0" max="100" style="display: none;"></progress>
+  <button id="showTiles">Afficher PMTiles</button>
+</div>
+<div id="map"></div>
 
-        // Ajouter une couche de secours OSM pour référence
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/pmtiles/dist/pmtiles.min.js"></script>
 
-        // Fonction pour charger le fichier PMTiles
-        function loadPMTiles() {
-            const pmtilesURL = 'https://drive.google.com/file/d/1H1JVAJsXPoQ8vAeuMGT05cb9zzfXUqYK/view?usp=drive_link'; // URL du fichier PMTiles local
-            const p = new pmtiles.PMTiles(pmtilesURL); // Créez une instance de PMTiles
-            
-            p.getHeader().then((header) => {
-                if (currentLayer) {
-                    map.removeLayer(currentLayer);
-                }
+<script>
+  // Initialisation de la carte centrée sur le Loiret
+  const map = L.map('map').setView([47.90, 1.90], 9); // coordonnées du Loiret, France
 
-                const layer = pmtiles.leafletRasterLayer(p, {
-                    maxzoom: header.maxZoom,
-                    attribution: 'Tiles par <a href="http://stamen.com">Stamen Design</a>, sous <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Données par <a href="http://openstreetmap.org">OpenStreetMap</a>, sous <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'
-                });
+  // Fond de plan OpenStreetMap
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+  }).addTo(map);
 
-                layer.addTo(map);
-                currentLayer = layer; // Mémoriser la couche actuelle
-            }).catch((err) => {
-                console.error('Erreur lors du chargement des PMTiles:', err);
-            });
-        }
+  // Référence vers le bouton de téléchargement et la barre de progression
+  const downloadButton = document.getElementById('download');
+  const progressBar = document.getElementById('progress');
+  const showTilesButton = document.getElementById('showTiles');
 
-        // Gestion du bouton "Charger PMTiles"
-        document.getElementById('load-button').addEventListener('click', loadPMTiles);
-    </script>
+  // Fonction de téléchargement et stockage des tuiles dans IndexedDB
+  downloadButton.addEventListener('click', async () => {
+    const pmtilesUrl = 'https://scan25.s3.eu-north-1.amazonaws.com/output.pmtiles'; // Remplacez par l'URL directe du fichier PMTiles
+    progressBar.style.display = 'block';
+    progressBar.value = 0;
 
-    <!-- Code injected by live-server -->
-    <script>
-        // <![CDATA[  <-- For SVG support
-        if ('WebSocket' in window) {
-            (function () {
-                function refreshCSS() {
-                    var sheets = [].slice.call(document.getElementsByTagName("link"));
-                    var head = document.getElementsByTagName("head")[0];
-                    for (var i = 0; i < sheets.length; ++i) {
-                        var elem = sheets[i];
-                        var parent = elem.parentElement || head;
-                        parent.removeChild(elem);
-                        var rel = elem.rel;
-                        if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
-                            var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
-                            elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
-                        }
-                        parent.appendChild(elem);
-                    }
-                }
-                var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
-                var address = protocol + window.location.host + window.location.pathname + '/ws';
-                var socket = new WebSocket(address);
-                socket.onmessage = function (msg) {
-                    if (msg.data == 'reload') window.location.reload();
-                    else if (msg.data == 'refreshcss') refreshCSS();
-                };
-                if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
-                    console.log('Live reload enabled.');
-                    sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
-                }
-            })();
-        }
-        else {
-            console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
-        }
-        // ]]>
-    </script>
+    try {
+      const response = await fetch(pmtilesUrl);
+      const reader = response.body.getReader();
+      const contentLength = +response.headers.get('Content-Length');
+      let receivedLength = 0;
+      const chunks = [];
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        receivedLength += value.length;
+        progressBar.value = (receivedLength / contentLength) * 100;
+      }
+
+      const pmtilesData = new Blob(chunks);
+      const dbRequest = indexedDB.open('MapDB', 1);
+
+      dbRequest.onupgradeneeded = function () {
+        const db = dbRequest.result;
+        db.createObjectStore('tiles', { keyPath: 'name' });
+      };
+
+      dbRequest.onsuccess = function () {
+        const db = dbRequest.result;
+        const transaction = db.transaction('tiles', 'readwrite');
+        const store = transaction.objectStore('tiles');
+        store.put({ name: 'mapData', data: pmtilesData });
+      };
+      alert('Téléchargement terminé et stocké !');
+      progressBar.style.display = 'none';
+
+    } catch (error) {
+      console.error('Erreur de téléchargement:', error);
+      alert('Le téléchargement a échoué.');
+    }
+  });
+
+  // Fonction pour afficher les tuiles PMTiles stockées dans IndexedDB
+  showTilesButton.addEventListener('click', () => {
+    const dbRequest = indexedDB.open('MapDB', 1);
+
+    dbRequest.onsuccess = function () {
+      const db = dbRequest.result;
+      const transaction = db.transaction('tiles', 'readonly');
+      const store = transaction.objectStore('tiles');
+      const request = store.get('mapData');
+
+      request.onsuccess = function () {
+        const pmtilesData = request.result.data;
+        const pmtilesBlob = new Blob([pmtilesData]);
+        const pmtilesUrl = URL.createObjectURL(pmtilesBlob);
+        
+        const pmtilesLayer = new PMTiles(pmtilesUrl, {
+          attribution: '&copy; PMTiles'
+        });
+
+        pmtilesLayer.addTo(map);
+      };
+    };
+  });
+</script>
+
 </body>
 </html>
